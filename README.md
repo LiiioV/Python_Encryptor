@@ -8,12 +8,14 @@ main.py break --input_file "encode_file.txt" --output_file "hacked_Alice.txt" --
 
 
 main.py decode --key CpluspLuSisFine --cipher vigenere
-/>> RnebgcTmLpwGmfx
+
+\>> RnebgcTmLpwGmfx
 
 << PythonIsTheBest
 
 
 main.py encode --key CpluspLuSisFine --cipher vigenere
-/>> PythonIsTheBest
+
+\>> PythonIsTheBest
 
 << RnebgcTmLpwGmfx
