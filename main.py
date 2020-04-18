@@ -1,30 +1,29 @@
 import string
 import collections
-
+import argparse
 
 '''
 ////////////
-Tools
+Constants
 ////////////
 '''
 
 
-def built_alphabet(strr):
+def built_alphabet(string_of_alphabet):
     diction = dict()
-    for it in range(len(strr)):
-        diction[strr[it]] = it
-        diction[it] = strr[it]
-    diction['size'] = len(strr)
+    for iterator in range(len(string_of_alphabet)):
+        diction[string_of_alphabet[iterator]] = iterator
+        diction[iterator] = string_of_alphabet[iterator]
+    diction['size'] = len(string_of_alphabet)
     return diction
 
 
-lowercase = built_alphabet(string.ascii_lowercase)
-uppercase = built_alphabet(string.ascii_uppercase)
-digits = built_alphabet(string.digits)
-punctations = built_alphabet(string.punctuation + ' ')
+LOWERCASE = built_alphabet(string.ascii_lowercase)
+UPPERCASE = built_alphabet(string.ascii_uppercase)
+DIGITS = built_alphabet(string.digits)
+PUNCTATIONS = built_alphabet(string.punctuation + ' ')
 
-alphabet = [lowercase, uppercase, digits, punctations]
-
+ALPHABET = [LOWERCASE, UPPERCASE, DIGITS, PUNCTATIONS]
 
 '''
 ////////////
@@ -33,23 +32,26 @@ Cipher Caesar
 '''
 
 
-def encode_caesar(key, uncode_str):
-    return code_caesar(key, uncode_str)
+def encode_caesar(key_of_code, encrypted_string):
+    return code_caesar(key_of_code, encrypted_string)
 
 
-def decode_caesar(key, uncode_str):
-    return code_caesar(-key, uncode_str)
+def decode_caesar(key_of_code, encrypted_string):
+    return code_caesar(- key_of_code, encrypted_string)
 
 
-def code_caesar(key, uncode_str):
-    ans = ""
-    for it in uncode_str:
-        for typee in alphabet:
-            if it in typee:
-                ans += typee[(typee[it] + key % typee['size']
-                              + typee['size']) % typee['size']]
+def code_caesar(key_of_code, encrypted_string):
+    answer_string = ""
+    for iterator in encrypted_string:
+        for type_of_alphabet in ALPHABET:
+            if iterator in type_of_alphabet:
+                answer_string += type_of_alphabet[
+                    (type_of_alphabet[iterator] +
+                     key_of_code % type_of_alphabet['size'] +
+                     type_of_alphabet['size']) % type_of_alphabet['size']
+                    ]
                 break
-    return ans
+    return answer_string
 
 
 '''
@@ -59,23 +61,26 @@ Cipher Vigenere
 '''
 
 
-def encode_vigenere(key, uncode_str):
-    return code_vigenere(1, key, uncode_str)
+def encode_vigenere(key_of_code, encrypted_string):
+    return code_vigenere(1, key_of_code, encrypted_string)
 
 
-def decode_vigenere(key, uncode_str):
-    return code_vigenere(-1, key, uncode_str)
+def decode_vigenere(key_of_code, encrypted_string):
+    return code_vigenere(-1, key_of_code, encrypted_string)
 
 
-def code_vigenere(coef, key, uncode_str):
-    ans = ""
-    for it in range(len(uncode_str)):
-        for typee in alphabet:
-            if uncode_str[it] in typee:
-                ans += typee[(typee[uncode_str[it]] + coef * typee[key[it]]
-                              + typee['size']) % typee['size']]
+def code_vigenere(coefficient, key_of_code, encrypted_string):
+    answer_string = ""
+    for iterator in range(len(encrypted_string)):
+        for type_of_alphabet in ALPHABET:
+            if encrypted_string[iterator] in type_of_alphabet:
+                answer_string += type_of_alphabet[
+                    (type_of_alphabet[encrypted_string[iterator]] +
+                     coefficient * type_of_alphabet[key_of_code[iterator]] +
+                     type_of_alphabet['size']) % type_of_alphabet['size']
+                    ]
                 break
-    return ans
+    return answer_string
 
 
 '''
@@ -85,21 +90,21 @@ Calculate Frequency
 '''
 
 
-def freq_calc_str(freq_str):
-    c = collections.Counter()
-    for it in freq_str:
-        if it in lowercase:
-            c[it] += 1
-        if it in uppercase:
-            c[lowercase[uppercase[it]]] += 1
-    return c
+def frequency_calculator_string(frequency_string):
+    counter = collections.Counter()
+    for iterator in frequency_string:
+        if iterator in LOWERCASE:
+            counter[iterator] += 1
+        if iterator in UPPERCASE:
+            counter[LOWERCASE[UPPERCASE[iterator]]] += 1
+    return counter
 
 
-def freq_calc_text(*freq_strs):
-    c = collections.Counter()
-    for it in freq_strs:
-        c += freq_calc_str(it)
-    return c
+def frequency_calculator_text(frequency_text):
+    counter = collections.Counter()
+    for iterator in frequency_text:
+        counter += frequency_calculator_string(iterator)
+    return counter
 
 
 '''
@@ -110,24 +115,29 @@ Breaking
 
 
 def mse(list1, list2):
-    ans = 0
-    for it in range(len(list1)):
-        ans += (list1[it] - list2[it])**2
-    return ans
+    answer = 0
+    for iterator in range(len(list1)):
+        answer += (list1[iterator] - list2[iterator]) ** 2
+    return answer
 
 
-def breaking_key(counter, *strs):
+def breaking_key(key_counter, text):
     counter_list = []
-    for it in range(lowercase['size']):
-        counter_list.append(counter[lowercase[it]])
+    for iterator in range(LOWERCASE['size']):
+        counter_list.append(key_counter[LOWERCASE[iterator]])
 
-    calc = freq_calc_text(*strs)
+    calculator = frequency_calculator_text(text)
     mse_key_list = list()
-    for key in range(lowercase['size']):
-        calc_list = []
-        for it in range(lowercase['size']):
-            calc_list.append(calc[lowercase[(key + it) % lowercase['size']]])
-        mse_key_list.append((mse(counter_list, calc_list), key))
+    for hacked_key in range(LOWERCASE['size']):
+        calculating_list = []
+        for iterator in range(LOWERCASE['size']):
+            calculating_list.append(
+                calculator[LOWERCASE[(hacked_key + iterator)
+                                     % LOWERCASE['size']]]
+            )
+        mse_key_list.append(
+            (mse(counter_list, calculating_list), hacked_key)
+        )
     return sorted(mse_key_list)[0][1]
 
 
@@ -138,27 +148,27 @@ Pair of Tools
 '''
 
 
-def write_str(*args):
-    for it in args:
-        if out:
-            fout.write(str(it))
+def write_text(*strings):
+    for iterator in strings:
+        if any_output_direction:
+            fout.write(str(iterator))
             fout.write('\n')
         else:
-            print(it)
+            print(iterator)
 
 
-def encode(code_shape, code_key, uncode_str):
+def encode(code_shape, key_of_code, encrypted_string):
     if code_shape == 'caesar':
-        return encode_caesar(int(code_key), uncode_str)
+        return encode_caesar(int(key_of_code), encrypted_string)
     elif code_shape == 'vigenere':
-        return encode_vigenere(code_key, uncode_str)
+        return encode_vigenere(key_of_code, encrypted_string)
 
 
-def decode(code_shape, code_key, uncode_str):
+def decode(code_shape, key_of_code, encrypted_string):
     if code_shape == 'caesar':
-        return decode_caesar(int(code_key), uncode_str)
+        return decode_caesar(int(key_of_code), encrypted_string)
     elif code_shape == 'vigenere':
-        return decode_vigenere(code_key, uncode_str)
+        return decode_vigenere(key_of_code, encrypted_string)
 
 
 '''
@@ -167,69 +177,66 @@ Console
 ////////////
 '''
 
-inp = False
-out = False
+commands = argparse.ArgumentParser()
+commands.add_argument('command', help='encode|decode|frequency|break')
+commands.add_argument('--cipher', help='caesar|vigenere')
+commands.add_argument('--key', help='key == number|word')
+commands.add_argument('--input_file', help='file with text to do something')
+commands.add_argument('--output_file', help='the output file')
+commands.add_argument('--frequencies', help='file with frequencies')
+args = commands.parse_args()
 
 
-input_string = input().split("--")
-for it in input_string:
-    if it[0] == 'i':
-        inp = True
-        input_file = it.split(' ')[1]
-        fin = open(it.split(' ')[1], 'r')
-    elif it[0] == 'o':
-        out = True
-        fout = open(it.split(" ")[1], 'w')
-    elif it[0] == 'c':
-        shape = it.split(" ")[1]
-    elif it[0] == 'k':
-        key = it.split(" ")[1]
-    else:
-        func = it.split(' ')[0]
+try:
+    fin = open(args.input_file, 'r')
+    any_input_direction = True
+    input_filename = args.input_file
+except IOError:
+    any_input_direction = False
+    input_filename = "file.nothing"
 
 
-if func == 'encode':
-    if inp:
-        for it in fin:
-            write_str(encode(shape, key, it))
-    else:
-        while True:
-            try:
-                s = input()
-                write_str(encode(shape, key, s))
-            except:
-                break
-elif func == 'decode':
-    if inp:
-        for it in fin:
-            write_str(decode(shape, key, it))
+try:
+    fout = open(args.output_file, 'w')
+    any_output_direction = True
+    output_filename = args.output_file
+except IOError:
+    any_output_direction = False
+    output_filename = "file.nothing"
+
+
+if args.command == 'encode':
+    if any_input_direction:
+        for line in fin:
+            write_text(encode(args.cipher, args.key, line))
     else:
         while True:
             try:
-                s = input()
-                write_str(decode(shape, key, s))
-            except:
+                line = input()
+                write_text(encode(args.cipher, args.key, line))
+            except IOError:
                 break
-elif func == 'frequency':
-    ans = freq_calc_text(*fin)
+elif args.command == 'decode':
+    if any_input_direction:
+        for line in fin:
+            write_text(decode(args.cipher, args.key, line))
+    else:
+        while True:
+            try:
+                line = input()
+                write_text(decode(args.cipher, args.key, line))
+            except IOError:
+                break
+elif args.command == 'frequency':
+    ans = frequency_calculator_text(fin)
     for key, value in ans.items():
-        write_str("{}: {}".format(key, value))
-elif func == 'breaking':
-    file_frequency = open(key, 'r')
+        write_text("{}: {}".format(key, value))
+elif args.command == 'break':
+    frequencies = open(args.frequencies, 'r')
     freq_counter = collections.Counter()
-    for it in file_frequency:
-        freq_counter[it[0]] = int(it.split(' ')[1])
-    k = breaking_key(freq_counter, *fin)
-    copy = open(input_file, 'r')
+    for freq in frequencies:
+        freq_counter[freq[0]] = int(freq.split(' ')[1])
+    k = breaking_key(freq_counter, fin)
+    copy = open(input_filename, 'r')
     for it in copy:
-        write_str(decode('caesar', k, it))
-
-
-'''
-decode --input enc.txt --output dec.txt --key 1 --cipher caesar
-encode --input Alice.txt --output enc.txt --key 1 --cipher caesar
-encode --input newf.txt --output bb.txt --key 1 --cipher caesar
-decode --input bb.txt --output aa.txt --key 1 --cipher caesar
-frequency --input Alice.txt --output out.txt
-breaking --input enc.txt --output break.txt --key out.txt
-'''
+        write_text(decode('caesar', k, it))
