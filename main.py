@@ -37,7 +37,7 @@ def encode_caesar(key_of_code, encrypted_string):
 
 
 def decode_caesar(key_of_code, encrypted_string):
-    return code_caesar(- key_of_code, encrypted_string)
+    return code_caesar(-key_of_code, encrypted_string)
 
 
 def code_caesar(key_of_code, encrypted_string):
@@ -187,20 +187,20 @@ commands.add_argument('--frequencies', help='file with frequencies')
 args = commands.parse_args()
 
 
-try:
+if args.input_file is not None:
     fin = open(args.input_file, 'r')
     any_input_direction = True
     input_filename = args.input_file
-except IOError:
+else:
     any_input_direction = False
     input_filename = "file.nothing"
 
 
-try:
+if args.output_file is not None:
     fout = open(args.output_file, 'w')
     any_output_direction = True
     output_filename = args.output_file
-except IOError:
+else:
     any_output_direction = False
     output_filename = "file.nothing"
 
@@ -240,3 +240,4 @@ elif args.command == 'break':
     copy = open(input_filename, 'r')
     for it in copy:
         write_text(decode('caesar', k, it))
+
