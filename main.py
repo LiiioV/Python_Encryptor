@@ -10,7 +10,7 @@ Constants
 
 
 def built_alphabet(string_of_alphabet):
-    diction = dict()
+    diction = collections.Counter()
     for iterator in range(len(string_of_alphabet)):
         diction[string_of_alphabet[iterator]] = iterator
         diction[iterator] = string_of_alphabet[iterator]
@@ -43,6 +43,7 @@ def decode_caesar(key_of_code, encrypted_string):
 def code_caesar(key_of_code, encrypted_string):
     answer_string = ""
     for iterator in encrypted_string:
+        encrypting = False
         for type_of_alphabet in ALPHABET:
             if iterator in type_of_alphabet:
                 answer_string += type_of_alphabet[
@@ -50,7 +51,10 @@ def code_caesar(key_of_code, encrypted_string):
                      key_of_code % type_of_alphabet['size'] +
                      type_of_alphabet['size']) % type_of_alphabet['size']
                     ]
+                encrypting = True
                 break
+        if not encrypting:
+            answer_string += iterator
     return answer_string
 
 
@@ -72,14 +76,22 @@ def decode_vigenere(key_of_code, encrypted_string):
 def code_vigenere(coefficient, key_of_code, encrypted_string):
     answer_string = ""
     for iterator in range(len(encrypted_string)):
-        for type_of_alphabet in ALPHABET:
-            if encrypted_string[iterator] in type_of_alphabet:
-                answer_string += type_of_alphabet[
-                    (type_of_alphabet[encrypted_string[iterator]] +
-                     coefficient * type_of_alphabet[key_of_code[iterator]] +
-                     type_of_alphabet['size']) % type_of_alphabet['size']
-                    ]
-                break
+        encrypting = False
+        for type_of_enc in ALPHABET:
+            if encrypted_string[iterator] in type_of_enc:
+                for type_of_key in ALPHABET:
+                    if key_of_code[iterator] in type_of_key:
+                        answer_string += type_of_enc[
+                            (type_of_enc[encrypted_string[iterator]] +
+                             (coefficient * type_of_key[key_of_code[iterator]])
+                             % type_of_enc['size'] + type_of_enc['size']) %
+                            type_of_enc['size']
+                        ]
+                        encrypting = True
+                        break
+            break
+        if not encrypting:
+            answer_string += encrypted_string[iterator]
     return answer_string
 
 
@@ -210,23 +222,27 @@ if args.command == 'encode':
         for line in fin:
             write_text(encode(args.cipher, args.key, line))
     else:
-        while True:
+        EOF = True
+        while EOF:
             try:
                 line = input()
                 write_text(encode(args.cipher, args.key, line))
-            except IOError:
-                break
+            except EOFError:
+                EOF = False
+                pass
 elif args.command == 'decode':
     if any_input_direction:
         for line in fin:
             write_text(decode(args.cipher, args.key, line))
     else:
-        while True:
+        EOF = True
+        while EOF:
             try:
                 line = input()
                 write_text(decode(args.cipher, args.key, line))
-            except IOError:
-                break
+            except EOFError:
+                EOF = False
+                pass
 elif args.command == 'frequency':
     ans = frequency_calculator_text(fin)
     for key, value in ans.items():
