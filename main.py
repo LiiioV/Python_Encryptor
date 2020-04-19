@@ -257,3 +257,4 @@ elif args.command == 'break':
     for it in copy:
         write_text(decode('caesar', k, it))
 
+
