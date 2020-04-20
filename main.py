@@ -72,9 +72,12 @@ def decode_vigenere(key_of_code, encrypted_string):
 def code_vigenere(coefficient, key_of_code, encrypted_string):
     answer_string = ""
     for iterator in range(len(encrypted_string)):
+        if iterator >= len(key_of_code):
+            answer_string += encrypted_string[iterator]
+            continue
         encrypting = False
         for type_of_enc in ALPHABET:
-            if encrypted_string[iterator] in type_of_enc:
+            if encrypted_string[iterator] in type_of_enc: 
                 for type_of_key in ALPHABET:
                     if key_of_code[iterator] in type_of_key:
                         answer_string += type_of_enc[
@@ -252,4 +255,5 @@ elif args.command == 'break':
     copy = open(input_filename, 'r')
     for it in copy:
         write_text(decode('caesar', k, it))
+
 
