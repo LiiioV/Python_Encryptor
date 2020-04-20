@@ -43,7 +43,6 @@ def decode_caesar(key_of_code, encrypted_string):
 def code_caesar(key_of_code, encrypted_string):
     answer_string = ""
     for iterator in encrypted_string:
-        encrypting = False
         for type_of_alphabet in ALPHABET:
             if iterator in type_of_alphabet:
                 answer_string += type_of_alphabet[
@@ -51,10 +50,7 @@ def code_caesar(key_of_code, encrypted_string):
                      key_of_code % type_of_alphabet['size'] +
                      type_of_alphabet['size']) % type_of_alphabet['size']
                     ]
-                encrypting = True
                 break
-        if not encrypting:
-            answer_string += iterator
     return answer_string
 
 
@@ -256,5 +252,4 @@ elif args.command == 'break':
     copy = open(input_filename, 'r')
     for it in copy:
         write_text(decode('caesar', k, it))
-
-
+\n
