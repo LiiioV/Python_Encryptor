@@ -77,7 +77,7 @@ def code_vigenere(coefficient, key_of_code, encrypted_string):
             continue
         encrypting = False
         for type_of_enc in ALPHABET:
-            if encrypted_string[iterator] in type_of_enc: 
+            if encrypted_string[iterator] in type_of_enc:
                 for type_of_key in ALPHABET:
                     if key_of_code[iterator] in type_of_key:
                         answer_string += type_of_enc[
@@ -88,10 +88,44 @@ def code_vigenere(coefficient, key_of_code, encrypted_string):
                         ]
                         encrypting = True
                         break
-            break
+                break
         if not encrypting:
             answer_string += encrypted_string[iterator]
     return answer_string
+
+
+'''
+//////////////
+Cipher Vernam
+//////////////
+'''
+
+
+def encode_vernam(key_of_code, encrypted_string):
+    answer_string = ""
+    for iterator in range(len(encrypted_string)):
+        if iterator >= len(key_of_code):
+            answer_string += encrypted_string[iterator]
+            continue
+        encrypting = False
+        for type_of_enc in ALPHABET:
+            if encrypted_string[iterator] in type_of_enc:
+                for type_of_key in ALPHABET:
+                    if key_of_code[iterator] in type_of_key:
+                        answer_string += type_of_enc[
+                            type_of_enc[encrypted_string[iterator]] ^
+                            type_of_key[key_of_code[iterator]]
+                        ]
+                        encrypting = True
+                        break
+                break
+        if not encrypting:
+            answer_string += encrypted_string[iterator]
+    return answer_string
+
+
+def decode_vernam(key_of_code, encrypted_string):
+    return encode_vernam(key_of_code, encrypted_string)
 
 
 '''
@@ -173,6 +207,8 @@ def encode(code_shape, key_of_code, encrypted_string):
         return encode_caesar(int(key_of_code), encrypted_string)
     elif code_shape == 'vigenere':
         return encode_vigenere(key_of_code, encrypted_string)
+    elif code_shape == 'vernam':
+        return encode_vernam(key_of_code, encrypted_string)
 
 
 def decode(code_shape, key_of_code, encrypted_string):
@@ -180,6 +216,8 @@ def decode(code_shape, key_of_code, encrypted_string):
         return decode_caesar(int(key_of_code), encrypted_string)
     elif code_shape == 'vigenere':
         return decode_vigenere(key_of_code, encrypted_string)
+    elif code_shape == 'vernam':
+        return decode_vernam(key_of_code, encrypted_string)
 
 
 '''
@@ -187,6 +225,7 @@ def decode(code_shape, key_of_code, encrypted_string):
 Console
 ////////////
 '''
+
 
 commands = argparse.ArgumentParser()
 commands.add_argument('command', help='encode|decode|frequency|break')
