@@ -21,9 +21,8 @@ def built_alphabet(string_of_alphabet):
 LOWERCASE = built_alphabet(string.ascii_lowercase)
 UPPERCASE = built_alphabet(string.ascii_uppercase)
 DIGITS = built_alphabet(string.digits)
-PUNCTATIONS = built_alphabet(string.punctuation + ' ')
 
-ALPHABET = [LOWERCASE, UPPERCASE, DIGITS, PUNCTATIONS]
+ALPHABET = [LOWERCASE, UPPERCASE, DIGITS]
 
 '''
 ////////////
@@ -43,6 +42,7 @@ def decode_caesar(key_of_code, encrypted_string):
 def code_caesar(key_of_code, encrypted_string):
     answer_string = ""
     for iterator in encrypted_string:
+        encrypted = False
         for type_of_alphabet in ALPHABET:
             if iterator in type_of_alphabet:
                 answer_string += type_of_alphabet[
@@ -50,7 +50,10 @@ def code_caesar(key_of_code, encrypted_string):
                      key_of_code % type_of_alphabet['size'] +
                      type_of_alphabet['size']) % type_of_alphabet['size']
                     ]
+                encrypted = True
                 break
+        if not encrypted:
+            answer_string += iterator
     return answer_string
 
 
@@ -197,7 +200,6 @@ def write_text(*strings):
     for iterator in strings:
         if any_output_direction:
             fout.write(str(iterator))
-            fout.write('\n')
         else:
             print(iterator)
 
