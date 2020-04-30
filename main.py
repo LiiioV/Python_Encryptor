@@ -238,6 +238,9 @@ commands.add_argument('--output_file', help='the output file')
 commands.add_argument('--frequencies', help='file with frequencies')
 args = commands.parse_args()
 
+fin = None
+fout = None
+
 
 if args.input_file is not None:
     fin = open(args.input_file, 'r')
