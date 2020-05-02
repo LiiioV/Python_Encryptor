@@ -2,6 +2,7 @@ import string
 import collections
 import argparse
 import json
+import sys
 
 '''
 ////////////
@@ -106,9 +107,6 @@ Cipher Vernam
 def encode_vernam(key_of_code, encrypted_string):
     answer_string = ""
     for iterator in range(len(encrypted_string)):
-        if iterator >= len(key_of_code):
-            answer_string += encrypted_string[iterator]
-            continue
         encrypting = False
         for type_of_enc in ALPHABET:
             if encrypted_string[iterator] in type_of_enc:
@@ -116,7 +114,8 @@ def encode_vernam(key_of_code, encrypted_string):
                     if key_of_code[iterator] in type_of_key:
                         answer_string += type_of_enc[
                             type_of_enc[encrypted_string[iterator]] ^
-                            type_of_key[key_of_code[iterator]]
+                            type_of_key[key_of_code[iterator %
+                                                    len(key_of_code)]]
                         ]
                         encrypting = True
                         break
@@ -200,7 +199,7 @@ def write_text(*strings):
         if any_output_direction:
             fout.write(str(iterator))
         else:
-            print(iterator)
+            print(iterator, end="")
 
 
 def encode(code_shape, key_of_code, encrypted_string):
@@ -264,27 +263,17 @@ if args.command == 'encode':
         for line in fin:
             write_text(encode(args.cipher, args.key, line))
     else:
-        EOF = True
-        while EOF:
-            try:
-                line = input()
-                write_text(encode(args.cipher, args.key, line))
-            except EOFError:
-                EOF = False
-                pass
+        lines = sys.stdin.readlines()
+        for line in lines:
+            write_text(encode(args.cipher, args.key, line))
 elif args.command == 'decode':
     if any_input_direction:
         for line in fin:
             write_text(decode(args.cipher, args.key, line))
     else:
-        EOF = True
-        while EOF:
-            try:
-                line = input()
-                write_text(decode(args.cipher, args.key, line))
-            except EOFError:
-                EOF = False
-                pass
+        lines = sys.stdin.readlines()
+        for line in lines:
+            write_text(encode(args.cipher, args.key, line))
 elif args.command == 'frequency':
     ans = frequency_calculator_text(fin)
     json.dump(ans, fout)
