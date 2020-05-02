@@ -193,16 +193,23 @@ Pair of Tools
 ////////////
 '''
 
+any_input = False
+any_output = False
+fin = None
+fout = None
+input_filename = ""
+output_filename = ""
+
 
 def write_text(*strings):
     for iterator in strings:
-        if any_output_direction:
+        if any_output:
             fout.write(str(iterator))
         else:
             print(iterator, end="")
 
 
-def encode(code_shape, key_of_code, encrypted_string):
+def encode_in_shape(code_shape, key_of_code, encrypted_string):
     if code_shape == 'caesar':
         return encode_caesar(int(key_of_code), encrypted_string)
     elif code_shape == 'vigenere':
@@ -211,13 +218,45 @@ def encode(code_shape, key_of_code, encrypted_string):
         return encode_vernam(key_of_code, encrypted_string)
 
 
-def decode(code_shape, key_of_code, encrypted_string):
+def decode_in_shape(code_shape, key_of_code, encrypted_string):
     if code_shape == 'caesar':
         return decode_caesar(int(key_of_code), encrypted_string)
     elif code_shape == 'vigenere':
         return decode_vigenere(key_of_code, encrypted_string)
     elif code_shape == 'vernam':
         return decode_vernam(key_of_code, encrypted_string)
+
+
+def encode(args):
+    if args.input_file is not None:
+        for line in fin:
+            write_text(encode_in_shape(args.cipher, args.key, line))
+    else:
+        lines = sys.stdin.readlines()
+        for line in lines:
+            write_text(encode_in_shape(args.cipher, args.key, line))
+
+
+def decode(args):
+    if args.input_file is not None:
+        for line in fin:
+            write_text(decode_in_shape(args.cipher, args.key, line))
+    else:
+        lines = sys.stdin.readlines()
+        for line in lines:
+            write_text(decode_in_shape(args.cipher, args.key, line))
+
+
+def frequency(args):
+    json.dump(frequency_calculator_text(fin), fout)
+
+
+def hack(args):
+    freq_counter = json.load(open(args.frequencies, 'r'))
+    k = breaking_key(freq_counter, fin)
+    copy = open(input_filename, 'r')
+    for it in copy:
+        write_text(decode_in_shape('caesar', k, it))
 
 
 '''
@@ -227,60 +266,59 @@ Console
 '''
 
 
-commands = argparse.ArgumentParser()
-commands.add_argument('command', help='encode|decode|frequency|break')
-commands.add_argument('--cipher', help='caesar|vigenere')
-commands.add_argument('--key', help='key == number|word')
-commands.add_argument('--input_file', help='file with text to do something')
-commands.add_argument('--output_file', help='the output file')
-commands.add_argument('--frequencies', help='file with frequencies')
-args = commands.parse_args()
-
-fin = None
-fout = None
-
-
-if args.input_file is not None:
-    fin = open(args.input_file, 'r')
-    any_input_direction = True
-    input_filename = args.input_file
-else:
-    any_input_direction = False
-    input_filename = "file.nothing"
+parser = argparse.ArgumentParser(
+    description=" Command line arguments reader",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+)
+subparsers = parser.add_subparsers()
+parser_encode = subparsers.add_parser('encode', help=' encode command ')
+parser_encode.set_defaults(mode='encode', function=encode)
+parser_encode.add_argument(
+    '--cipher', choices=['caesar', 'vigenere', 'vernam'],
+    help=" type of cipher ", required=True
+)
+parser_encode.add_argument('--key', help=" key of cipher ", required=True)
+parser_encode.add_argument('--input_file', help=" input file ")
+parser_encode.add_argument('--output_file', help=" output file ")
 
 
-if args.output_file is not None:
-    fout = open(args.output_file, 'w')
-    any_output_direction = True
-    output_filename = args.output_file
-else:
-    any_output_direction = False
-    output_filename = "file.nothing"
+parser_decode = subparsers.add_parser('decode', help=' decode command')
+parser_decode.set_defaults(mode='decode', function=decode)
+parser_decode.add_argument(
+    '--cipher', choices=['caesar', 'vigenere', 'vernam'],
+    help=' type o cipher ', required=True
+)
+parser_decode.add_argument('--key', help='Cipher key', required=True)
+parser_decode.add_argument('--input_file', help=' input file ')
+parser_decode.add_argument('--output_file', help=' output file ')
 
 
-if args.command == 'encode':
-    if any_input_direction:
-        for line in fin:
-            write_text(encode(args.cipher, args.key, line))
-    else:
-        lines = sys.stdin.readlines()
-        for line in lines:
-            write_text(encode(args.cipher, args.key, line))
-elif args.command == 'decode':
-    if any_input_direction:
-        for line in fin:
-            write_text(decode(args.cipher, args.key, line))
-    else:
-        lines = sys.stdin.readlines()
-        for line in lines:
-            write_text(encode(args.cipher, args.key, line))
-elif args.command == 'frequency':
-    ans = frequency_calculator_text(fin)
-    json.dump(ans, fout)
-elif args.command == 'break':
-    frequencies = open(args.frequencies, 'r')
-    freq_counter = json.load(frequencies)
-    k = breaking_key(freq_counter, fin)
-    copy = open(input_filename, 'r')
-    for it in copy:
-        write_text(decode('caesar', k, it))
+parser_freq = subparsers.add_parser('frequency', help=' frequency command')
+parser_freq.set_defaults(mode='frequency', function=frequency)
+parser_freq.add_argument('--input_file', help=' input file ')
+parser_freq.add_argument('--output_file', help=' model file', required=True)
+
+
+parser_hack = subparsers.add_parser('break', help=' hack command ')
+parser_hack.set_defaults(mode='break', function=hack)
+parser_hack.add_argument(
+    '--cipher', choices=['caesar'], help=' type of cipher ', default='caesar'
+)
+parser_hack.add_argument('--input_file', help=' input file ')
+parser_hack.add_argument('--output_file', help=' output file ')
+parser_hack.add_argument('--frequencies', help=' model file ', required=True)
+
+commands = parser.parse_args()
+
+if commands.input_file is not None:
+    fin = open(commands.input_file, 'r')
+    any_input = True
+    input_filename = commands.input_file
+
+
+if commands.output_file is not None:
+    fout = open(commands.output_file, 'w')
+    any_output = True
+    output_filename = commands.output_file
+
+commands.function(commands)
