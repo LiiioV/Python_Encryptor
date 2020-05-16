@@ -96,8 +96,12 @@ def code_vigenere_symbol(coefficient, key_symbol, code_symbol):
 
 
 def code_vigenere(coefficient, key_of_code, code_string):
-    return ''.join(code_vigenere_symbol(coefficient, key_of_code, symbol)
-                   for symbol in code_string)
+    return ''.join(
+        code_vigenere_symbol(
+            coefficient, key_of_code[ind % len(key_of_code)], symbol
+        )
+        for ind, symbol in enumerate(code_string)
+    )
 
 
 '''
@@ -160,7 +164,7 @@ Breaking
 '''
 
 
-def find_mse(list1, list2):
+def input_textd_mse(list1, list2):
     return sum((elem1-elem2) ** 2 for elem1, elem2 in zip(list1, list2))
 
 
@@ -175,7 +179,7 @@ def breaking_key(key_counter, text):
             for i in range(hack_key, hack_key + LOWERCASE['size'])
         ]
         mse_key_list.append(
-            (find_mse(counter_list, calculating_list), hack_key)
+            (input_textd_mse(counter_list, calculating_list), hack_key)
         )
     return min(mse_key_list)[1]
 
@@ -195,19 +199,13 @@ def get_input_text(path):
             return input_file.readlines()
 
 
-def get_output_file(path):
-    if path is None:
-        return None
-    else:
-        return open(path, 'w')
-
-
-def write_text(*lines, fout):
-    for line in lines:
-        if fout is not None:
-            fout.write(line)
-        else:
+def write_text(*lines, output_file):
+    if output_file is None:
+        for line in lines:
             print(line, end="")
+    else:
+        with open(output_file, 'a') as opened_output_file:
+            opened_output_file.write(''.join(lines))
 
 
 def code_in_shape(code_shape, mode, key_of_code, encode_string):
@@ -220,33 +218,31 @@ def code_in_shape(code_shape, mode, key_of_code, encode_string):
 
 
 def encode_decode(command):
-    fin = get_input_text(command.input_file)
-    fout = get_output_file(command.output_file)
-    for line in fin:
+    input_text = get_input_text(command.input_file)
+    for line in input_text:
         write_text(
             code_in_shape(command.cipher, command.mode, command.key, line),
-            fout=fout
+            output_file=command.output_file
         )
 
 
 def frequency(command):
-    fout = get_output_file(command.output_file)
-    json.dump(text_frequency_calculate(
-        get_input_text(command.input_file)), fp=fout
-    )
+    with open(command.output_file, 'w') as fout:
+        json.dump(text_frequency_calculate(
+            get_input_text(command.input_file)), fp=fout
+        )
 
 
 def hack(command):
     with open(command.frequencies, 'r') as frequencies:
         freq_counter = json.load(frequencies)
-        fin = get_input_text(command.input_file)
-        fout = get_output_file(command.output_file)
-        key = breaking_key(freq_counter, fin)
+        input_text = get_input_text(command.input_file)
+        key = breaking_key(freq_counter, input_text)
 
-        for line in fin:
+        for line in input_text:
             write_text(
                 code_in_shape('caesar', 'decode', key, line),
-                fout=fout
+                output_file=command.output_file
             )
 
 
