@@ -12,12 +12,12 @@ Constants
 
 
 def built_alphabet(string_of_alphabet):
-    diction = dict()
-    for ind, symbol in enumerate(string_of_alphabet):
-        diction[symbol] = ind
-    diction['size'] = len(string_of_alphabet)
-    diction['base'] = string_of_alphabet
-    return diction
+    alphabet_dict = {
+        symbol: ind for ind, symbol in enumerate(string_of_alphabet)
+    }
+    alphabet_dict['size'] = len(string_of_alphabet)
+    alphabet_dict['alphabet_string'] = string_of_alphabet
+    return alphabet_dict
 
 
 LOWERCASE = built_alphabet(string.ascii_lowercase)
@@ -50,17 +50,15 @@ def decode_caesar(key_of_code, decode_string):
 def code_caesar_symbol(key_of_code, code_symbol):
     for code_type in ALPHABET:
         if code_symbol in code_type:
-            return code_type['base'][
+            return code_type['alphabet_string'][
                 (code_type[code_symbol] + key_of_code) % code_type['size']
             ]
     return code_symbol
 
 
 def code_caesar(key_of_code, code_string):
-    answer_string = ""
-    for symbol in code_string:
-        answer_string += code_caesar_symbol(key_of_code, symbol)
-    return answer_string
+    return ''.join(code_caesar_symbol(key_of_code, symbol)
+                   for symbol in code_string)
 
 
 '''
@@ -89,7 +87,7 @@ def code_vigenere_symbol(coefficient, key_symbol, code_symbol):
         if code_symbol in code_type:
             for key_type in ALPHABET:
                 if key_symbol in key_type:
-                    return code_type['base'][
+                    return code_type['alphabet_string'][
                         (code_type[code_symbol] + coefficient *
                          key_type[key_symbol]) % code_type['size']
                     ]
@@ -98,12 +96,8 @@ def code_vigenere_symbol(coefficient, key_symbol, code_symbol):
 
 
 def code_vigenere(coefficient, key_of_code, code_string):
-    answer_string = ""
-    for ind, symbol in enumerate(code_string):
-        answer_string += code_vigenere_symbol(
-            coefficient, key_of_code[ind % len(key_of_code)], symbol
-        )
-    return answer_string
+    return ''.join(code_vigenere_symbol(coefficient, key_of_code, symbol)
+                   for symbol in code_string)
 
 
 '''
@@ -124,20 +118,16 @@ def code_vernam_symbol(key_symbol, code_symbol):
         if code_symbol in code_type:
             for key_type in ALPHABET:
                 if key_symbol in key_type:
-                    return code_type['base'][
-                        (code_type[code_symbol] ^ key_type[key_symbol])
+                    return code_type['alphabet_string'][
+                        code_type[code_symbol] ^ key_type[key_symbol]
                     ]
             return code_symbol
     return code_symbol
 
 
 def encode_vernam(key_of_code, encode_string):
-    answer_string = ""
-    for ind, symbol in enumerate(encode_string):
-        answer_string += code_vernam_symbol(
-            key_of_code[ind % len(key_of_code)], symbol
-        )
-    return answer_string
+    return ''.join(code_vernam_symbol(key_of_code, symbol)
+                   for symbol in encode_string)
 
 
 decode_vernam = encode_vernam
@@ -170,7 +160,7 @@ Breaking
 '''
 
 
-def mse(list1, list2):
+def find_mse(list1, list2):
     return sum((elem1-elem2) ** 2 for elem1, elem2 in zip(list1, list2))
 
 
@@ -185,7 +175,7 @@ def breaking_key(key_counter, text):
             for i in range(hack_key, hack_key + LOWERCASE['size'])
         ]
         mse_key_list.append(
-            (mse(counter_list, calculating_list), hack_key)
+            (find_mse(counter_list, calculating_list), hack_key)
         )
     return min(mse_key_list)[1]
 
@@ -196,15 +186,25 @@ Pair of Tools
 ////////////
 '''
 
-any_output = False
-fin = None
-fout = None
-input_filename = ""
+
+def get_input_text(path):
+    if path is None:
+        return sys.stdin.readlines()
+    else:
+        with open(path, 'r') as input_file:
+            return input_file.readlines()
 
 
-def write_text(*lines):
+def get_output_file(path):
+    if path is None:
+        return None
+    else:
+        return open(path, 'w')
+
+
+def write_text(*lines, fout):
     for line in lines:
-        if any_output:
+        if fout is not None:
             fout.write(line)
         else:
             print(line, end="")
@@ -220,23 +220,34 @@ def code_in_shape(code_shape, mode, key_of_code, encode_string):
 
 
 def encode_decode(command):
+    fin = get_input_text(command.input_file)
+    fout = get_output_file(command.output_file)
     for line in fin:
         write_text(
-            code_in_shape(command.cipher, command.mode, command.key, line)
+            code_in_shape(command.cipher, command.mode, command.key, line),
+            fout=fout
         )
 
 
 def frequency(command):
-    json.dump(text_frequency_calculate(fin), fout)
+    fout = get_output_file(command.output_file)
+    json.dump(text_frequency_calculate(
+        get_input_text(command.input_file)), fp=fout
+    )
 
 
 def hack(command):
-    with open(commands.frequencies, 'r') as frequencies:
+    with open(command.frequencies, 'r') as frequencies:
         freq_counter = json.load(frequencies)
-        k = breaking_key(freq_counter, fin)
-        with open(input_filename, 'r') as copy:
-            for it in copy:
-                write_text(code_in_shape('caesar', 'decode', k, it))
+        fin = get_input_text(command.input_file)
+        fout = get_output_file(command.output_file)
+        key = breaking_key(freq_counter, fin)
+
+        for line in fin:
+            write_text(
+                code_in_shape('caesar', 'decode', key, line),
+                fout=fout
+            )
 
 
 '''
@@ -246,62 +257,76 @@ Console
 '''
 
 
-parser = argparse.ArgumentParser(
-    description=" Command line arguments reader",
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter
-)
-subparsers = parser.add_subparsers()
-parser_encode = subparsers.add_parser('encode', help=' for encoding text ')
-parser_encode.set_defaults(mode='encode', function=encode_decode)
-parser_encode.add_argument(
-    '--cipher', choices=['caesar', 'vigenere', 'vernam'],
-    help=" type of cipher ", required=True
-)
-parser_encode.add_argument('--key', required=True,
-                           help=" number(for caesar) or word(for else) ")
-parser_encode.add_argument('--input_file', help=" input file ")
-parser_encode.add_argument('--output_file', help=" output file ")
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description=" Command line arguments reader",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    subparsers = parser.add_subparsers()
+    parser_encode = subparsers.add_parser('encode', help=' for encoding text ')
+    parser_encode.set_defaults(mode='encode', function=encode_decode)
+    parser_encode.add_argument(
+        '--cipher', choices=['caesar', 'vigenere', 'vernam'],
+        help=" type of cipher ", required=True
+    )
+    parser_encode.add_argument(
+        '--key', required=True, help=" number(for caesar) or word(for else) "
+    )
+    parser_encode.add_argument(
+        '--input_file', help=" path to the file to be encrypted "
+                               )
+    parser_encode.add_argument(
+        '--output_file', help=' path to the file to be write result '
+    )
+
+    parser_decode = subparsers.add_parser('decode', help=' for decoding text ')
+    parser_decode.set_defaults(mode='decode', function=encode_decode)
+    parser_decode.add_argument(
+        '--cipher', choices=['caesar', 'vigenere', 'vernam'],
+        help=' type o cipher ', required=True
+    )
+    parser_decode.add_argument(
+        '--key', required=True, help=" number(for caesar) or word(for else) "
+    )
+    parser_decode.add_argument(
+        '--input_file', help=' path to the file to be encrypted '
+    )
+    parser_decode.add_argument(
+        '--output_file', help=' path to the file to be write result '
+    )
+
+    parser_freq = subparsers.add_parser('frequency',
+                                        help=' for counting frequency ')
+    parser_freq.set_defaults(mode='frequency', function=frequency)
+    parser_freq.add_argument(
+        '--input_file', help=' path to the file to calculate frequency '
+    )
+    parser_freq.add_argument(
+        '--output_file', help=' path to the file to be write result ',
+        required=True
+    )
+
+    parser_hack = subparsers.add_parser('break', help=' for hacking text ')
+    parser_hack.set_defaults(mode='break', function=hack)
+    parser_hack.add_argument(
+        '--cipher', choices=['caesar'], help=' type of cipher ',
+        default='caesar'
+    )
+    parser_hack.add_argument('--input_file', help=' path to the file to hack ')
+    parser_hack.add_argument(
+        '--output_file', help=' path to the file to be write result '
+    )
+    parser_hack.add_argument(
+        '--frequencies', help=' path to the file with frequencies ',
+        required=True
+    )
+    return parser.parse_args()
 
 
-parser_decode = subparsers.add_parser('decode', help=' for decoding text ')
-parser_decode.set_defaults(mode='decode', function=encode_decode)
-parser_decode.add_argument(
-    '--cipher', choices=['caesar', 'vigenere', 'vernam'],
-    help=' type o cipher ', required=True
-)
-parser_decode.add_argument('--key', required=True,
-                           help=" number(for caesar) or word(for else) ")
-parser_decode.add_argument('--input_file', help=' input file ')
-parser_decode.add_argument('--output_file', help=' output file ')
+def main():
+    args = parse_args()
+    args.function(args)
 
 
-parser_freq = subparsers.add_parser('frequency',
-                                    help=' for counting frequency ')
-parser_freq.set_defaults(mode='frequency', function=frequency)
-parser_freq.add_argument('--input_file', help=' input file ')
-parser_freq.add_argument('--output_file', help=' model file', required=True)
-
-
-parser_hack = subparsers.add_parser('break', help=' for hacking text ')
-parser_hack.set_defaults(mode='break', function=hack)
-parser_hack.add_argument(
-    '--cipher', choices=['caesar'], help=' type of cipher ', default='caesar'
-)
-parser_hack.add_argument('--input_file', help=' input file ')
-parser_hack.add_argument('--output_file', help=' output file ')
-parser_hack.add_argument('--frequencies', help=' model file ', required=True)
-
-commands = parser.parse_args()
-
-if commands.input_file is not None:
-    fin = open(commands.input_file, 'r')
-    input_filename = commands.input_file
-else:
-    fin = sys.stdin.readlines()
-
-
-if commands.output_file is not None:
-    fout = open(commands.output_file, 'w')
-    any_output = True
-
-commands.function(commands)
+if __name__ == '__main__':
+    main()
